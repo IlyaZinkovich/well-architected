@@ -6,12 +6,14 @@ variable "vpc" {
 }
 
 variable "private_subnets" {
+  type = "list"
 }
 
 variable "public_subnets" {
+  type = "list"
 }
 
-variable "alb_security_groups" {
+variable "alb_security_group" {
 }
 
 variable "app_port" {
@@ -36,10 +38,4 @@ variable "aws_region" {
 variable "app_count" {
   description = "Number of docker containers to run"
   default     = 1
-}
-
-variable "ecr_repository_url" {
-}
-
-variable "ecs_cluster" {
 }

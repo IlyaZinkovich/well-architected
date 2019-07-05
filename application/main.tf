@@ -1,20 +1,17 @@
-resource "aws_s3_bucket" "alb_logs" {
-  bucket = "test-alb-logs"
-  acl    = "private"
+resource "aws_ecr_repository" "ecr" {
+  name = "${var.project_name}"
+}
+
+resource "aws_ecs_cluster" "ecs" {
+  name = "${var.project_name}-cluster"
 }
 
 resource "aws_alb" "alb" {
   name               = "${var.project_name}-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = ["${var.alb_security_groups}"]
+  security_groups    = ["${var.alb_security_group}"]
   subnets            = ["${var.public_subnets}"]
-
-  access_logs {
-    bucket  = "${aws_s3_bucket.alb_logs.bucket}"
-    prefix  = "${var.project_name}-alb"
-    enabled = true
-  }
 }
 
 resource "aws_alb_target_group" "blue" {
@@ -101,7 +98,7 @@ data "template_file" "app_template" {
     fargate_memory     = "${var.fargate_memory}"
     aws_region         = "${var.aws_region}"
     app_port           = "${var.app_port}"
-    ecr_repository_url = "${var.ecr_repository_url}"
+    ecr_repository_url = "${aws_ecr_repository.ecr.repository_url}"
     log_group          = "${aws_cloudwatch_log_group.log_group.name}"
   }
 }
@@ -118,7 +115,7 @@ resource "aws_ecs_task_definition" "app" {
 
 resource "aws_ecs_service" "main" {
   name            = "${var.project_name}-service"
-  cluster         = "${var.ecs_cluster}"
+  cluster         = "${aws_ecs_cluster.ecs.id}"
   task_definition = "${aws_ecs_task_definition.app.arn}"
   desired_count   = "${var.app_count}"
   launch_type     = "FARGATE"

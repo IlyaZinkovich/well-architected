@@ -1,0 +1,10 @@
+version: 1.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "arn:aws:ecs:eu-central-1:052568155717:task-definition/test-app-task:37"
+        LoadBalancerInfo:
+          ContainerName: "name"
+          ContainerPort: "80"
+        PlatformVersion: "LATEST"
