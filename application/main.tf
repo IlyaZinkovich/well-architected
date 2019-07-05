@@ -127,7 +127,7 @@ resource "aws_ecs_service" "main" {
   network_configuration {
     security_groups  = []
     subnets          = ["${var.private_subnets}"]
-    assign_public_ip = true
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -148,4 +148,71 @@ resource "aws_ecs_service" "main" {
       "desired_count"
     ]
   }
+}
+
+resource "aws_s3_bucket" "codedeploy_bucket" {
+  bucket = "${var.project_name}-codedeploy-resources-bucket"
+  acl    = "private"
+}
+
+resource "aws_iam_role" "codedeploy_role" {
+  name = "${var.project_name}-codedeploy-role"
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "codedeploy.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy_role_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECSLimited"
+  role       = "${aws_iam_role.codedeploy_role.name}"
+}
+
+resource "aws_iam_role_policy" "codedeploy_role_policy" {
+  role = "${aws_iam_role.codedeploy_role.name}"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::052568155717:role/test-ecs-task-execution-role"
+      ]
+    },
+    {
+      "Effect":"Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:GetBucketVersioning",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "${aws_s3_bucket.codedeploy_bucket.arn}",
+        "${aws_s3_bucket.codedeploy_bucket.arn}/*"
+      ]
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_codedeploy_app" "app" {
+  compute_platform = "ECS"
+  name             = "${var.project_name}"
 }
