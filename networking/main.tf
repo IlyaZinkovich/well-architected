@@ -99,26 +99,89 @@ resource "aws_route_table_association" "egress_only_internet_traffic" {
   route_table_id = "${element(aws_route_table.egress_only_internet_traffic.*.id, count.index)}"
 }
 
-resource "aws_network_acl" "public_traffic" {
+# resource "aws_network_acl" "public_traffic" {
+#   vpc_id     = "${aws_vpc.main.id}"
+#   subnet_ids = ["${aws_subnet.public.*.id}"]
+
+#   ingress {
+#     protocol   = "tcp"
+#     rule_no    = 100
+#     action     = "allow"
+#     cidr_block = "0.0.0.0/0"
+#     from_port  = 80
+#     to_port    = 80
+#   }
+
+#   ingress {
+#     protocol   = "tcp"
+#     rule_no    = 101
+#     action     = "allow"
+#     cidr_block = "0.0.0.0/0"
+#     from_port  = 443
+#     to_port    = 443
+#   }
+
+#   ingress {
+#     protocol   = "tcp"
+#     rule_no    = 102
+#     action     = "allow"
+#     cidr_block = "${var.home_network_cidr}"
+#     from_port  = 22
+#     to_port    = 22
+#   }
+
+#   ingress {
+#     protocol   = "tcp"
+#     rule_no    = 103
+#     action     = "allow"
+#     cidr_block = "0.0.0.0/0"
+#     from_port  = 1024
+#     to_port    = 65535
+#   }
+
+#   egress {
+#     protocol   = "tcp"
+#     rule_no    = 100
+#     action     = "allow"
+#     cidr_block = "0.0.0.0/0"
+#     from_port  = 80
+#     to_port    = 80
+#   }
+
+#   egress {
+#     protocol   = "tcp"
+#     rule_no    = 101
+#     action     = "allow"
+#     cidr_block = "0.0.0.0/0"
+#     from_port  = 443
+#     to_port    = 443
+#   }
+
+#   egress {
+#     protocol   = "tcp"
+#     rule_no    = 102
+#     action     = "allow"
+#     cidr_block = "0.0.0.0/0"
+#     from_port  = 1024
+#     to_port    = 65535
+#   }
+
+#   tags {
+#     Name = "public-nacl"
+#   }
+# }
+
+resource "aws_network_acl" "private_traffic" {
   vpc_id     = "${aws_vpc.main.id}"
-  subnet_ids = ["${aws_subnet.public.*.id}"]
+  subnet_ids = ["${aws_subnet.private.*.id}"]
 
   ingress {
     protocol   = "tcp"
     rule_no    = 100
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 80
-    to_port    = 80
-  }
-
-  ingress {
-    protocol   = "tcp"
-    rule_no    = 101
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 443
-    to_port    = 443
+    from_port  = 22
+    to_port    = 22
   }
 
   egress {
@@ -131,7 +194,7 @@ resource "aws_network_acl" "public_traffic" {
   }
 
   tags {
-    Name = "public-nacl"
+    Name = "private-nacl"
   }
 }
 
@@ -161,6 +224,13 @@ resource "aws_security_group" "alb" {
     security_groups = ["${aws_security_group.application.id}"]
   }
 
+  egress {
+    protocol    = "tcp"
+    from_port   = 1024
+    to_port     = 65535
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   tags {
     Name = "alb-sg"
   }
@@ -176,11 +246,29 @@ resource "aws_security_group" "application" {
   }
 }
 
-resource "aws_security_group_rule" "application_ingress" {
-  type                     = "ingress"
-  protocol                 = "tcp"
-  from_port                = 8080
-  to_port                  = 8080
-  security_group_id        = "${aws_security_group.application.id}"
-  source_security_group_id = "${aws_security_group.alb.id}"
-}
+# resource "aws_security_group_rule" "application_ingress" {
+#   type                     = "ingress"
+#   protocol                 = "tcp"
+#   from_port                = 8080
+#   to_port                  = 8080
+#   security_group_id        = "${aws_security_group.application.id}"
+#   source_security_group_id = "${aws_security_group.alb.id}"
+# }
+
+# resource "aws_security_group_rule" "application_ingress_ssh" {
+#   type              = "ingress"
+#   protocol          = "tcp"
+#   from_port         = 22
+#   to_port           = 22
+#   cidr_blocks       = ["0.0.0.0/0"]
+#   security_group_id = "${aws_security_group.application.id}"
+# }
+
+# resource "aws_security_group_rule" "application_egress" {
+#   type              = "egress"
+#   protocol          = "tcp"
+#   from_port         = 1024
+#   to_port           = 65535
+#   cidr_blocks       = ["0.0.0.0/0"]
+#   security_group_id = "${aws_security_group.application.id}"
+# }

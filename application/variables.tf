@@ -39,3 +39,6 @@ variable "app_count" {
   description = "Number of docker containers to run"
   default     = 1
 }
+
+variable "application_security_group" {
+}

@@ -125,8 +125,8 @@ resource "aws_ecs_service" "main" {
   }
 
   network_configuration {
-    security_groups  = []
-    subnets          = ["${var.private_subnets}"]
+    security_groups  = ["${var.application_security_group}"]
+    subnets          = ["${var.public_subnets}"]
     assign_public_ip = false
   }
 

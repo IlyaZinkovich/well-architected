@@ -13,3 +13,7 @@ output "private_subnets" {
 output "alb_security_group" {
   value = "${aws_security_group.alb.id}"
 }
+
+output "application_security_group" {
+  value = "${aws_security_group.application.id}"
+}
